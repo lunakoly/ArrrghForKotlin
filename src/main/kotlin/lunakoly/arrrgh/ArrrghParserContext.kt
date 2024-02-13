@@ -1,13 +1,13 @@
 package lunakoly.arrrgh
 
-class ArrrghParserContext {
+internal class ArrrghParserContext : ArrrghParserContextOwner {
     private val errors = mutableListOf<String>()
     private val processors = mutableMapOf<String, Processor<*>>()
     private val defaultProcessor = ListProcessor()
 
-    fun default() = defaultProcessor
+    override fun default() = defaultProcessor
 
-    infix fun <R> String.denotes(processor: Processor<R>) = processor.also {
+    override infix fun <R> String.denotes(processor: Processor<R>) = processor.also {
         if (processors[this] != null) {
             errors.add("Duplicate processors registered for `$this`")
         }
@@ -42,9 +42,3 @@ class ArrrghParserContext {
         return error combineWith defaultProcessor.result.selfIfErrorOrNull()
     }
 }
-
-fun ArrrghParserContext.list(parameterName: String) = parameterName denotes ListProcessor()
-fun ArrrghParserContext.boolean(parameterName: String) = parameterName denotes BooleanProcessor()
-fun ArrrghParserContext.requiredString(parameterName: String, defaultValue: String? = null) =
-    parameterName denotes RequiredStringProcessor(defaultValue)
-fun ArrrghParserContext.optionalString(parameterName: String) = parameterName denotes OptionalStringProcessor()
