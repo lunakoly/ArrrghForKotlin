@@ -58,7 +58,7 @@ interface SingleValueProcessor<T> : Processor<T> {
 }
 
 class BooleanProcessor : SingleValueProcessor<Boolean> {
-    override var explicitlySetValue: ProcessingResult<Boolean> = ProcessingResult.Error("Expected a value")
+    override var explicitlySetValue: ProcessingResult<Boolean> = ProcessingResult.NO_VALUE_ERROR
     override val result: ProcessingResult<Boolean> get() = explicitlySetValue.selfIfValueOrNull() ?: ProcessingResult.Value(false)
 
     override fun processNextValue(args: Iterator<String>) = ProcessingResult.Value(true)
@@ -68,7 +68,7 @@ class BooleanProcessor : SingleValueProcessor<Boolean> {
 }
 
 class RequiredStringProcessor(defaultValue: String? = null) : SingleValueProcessor<String> {
-    override var explicitlySetValue: ProcessingResult<String> = ProcessingResult.Error("Expected a value")
+    override var explicitlySetValue: ProcessingResult<String> = ProcessingResult.NO_VALUE_ERROR
     override val result: ProcessingResult<String> get() = explicitlySetValue.selfIfValueOrNull() ?: initialValue
 
     private val initialValue = when {
@@ -80,7 +80,7 @@ class RequiredStringProcessor(defaultValue: String? = null) : SingleValueProcess
 }
 
 class OptionalStringProcessor : SingleValueProcessor<String?> {
-    override var explicitlySetValue: ProcessingResult<String?> = ProcessingResult.Error("Expected a value")
+    override var explicitlySetValue: ProcessingResult<String?> = ProcessingResult.NO_VALUE_ERROR
     override val result: ProcessingResult<String?> get() = explicitlySetValue.selfIfValueOrNull() ?: ProcessingResult.Value(null)
 
     override fun processNextValue(args: Iterator<String>) = expectNext(args)

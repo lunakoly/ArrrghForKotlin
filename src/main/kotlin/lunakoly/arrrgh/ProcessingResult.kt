@@ -5,6 +5,10 @@ sealed class ProcessingResult<out T> {
     data class Error(val messages: List<String>) : ProcessingResult<Nothing>() {
         constructor(message: String) : this(listOf(message))
     }
+
+    companion object {
+        val NO_VALUE_ERROR = Error("Requires a value")
+    }
 }
 
 inline fun <T, R : T> ProcessingResult<T>.valueOrOnError(block: (ProcessingResult.Error) -> R): T {
