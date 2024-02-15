@@ -1,4 +1,4 @@
-package lunakoly.arrrgh
+package lunakoly.arrrgh.util
 
 class PeekingIterator<T>(val original: Iterator<T>) : Iterator<T> {
     private sealed class Optional<out T> {

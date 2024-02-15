@@ -1,5 +1,8 @@
 package lunakoly.arrrgh
 
+import lunakoly.arrrgh.util.PeekingIterator
+import lunakoly.arrrgh.util.withPeek
+
 internal class ArrrghParserContext : ArrrghParserContextOwner {
     private val errors = mutableListOf<String>()
     private val processors = mutableMapOf<String, Processor<*>>()

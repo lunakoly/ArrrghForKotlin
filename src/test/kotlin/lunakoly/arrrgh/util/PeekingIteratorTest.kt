@@ -1,4 +1,4 @@
-package lunakoly.arrrgh
+package lunakoly.arrrgh.util
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
