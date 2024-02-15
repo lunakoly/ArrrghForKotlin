@@ -57,6 +57,21 @@ interface SingleValueProcessor<T> : Processor<T> {
     fun processNextValue(args: Iterator<String>): ProcessingResult<T>
 }
 
+interface RequiredSingleValueProcessor<R> : SingleValueProcessor<R> {
+    override val result: ProcessingResult<R> get() = explicitlySetValue.selfIfValueOrNull() ?: initialValue
+
+    val defaultValue: R?
+
+    private val initialValue get() = when (val default = defaultValue) {
+        null -> explicitlySetValue
+        else -> ProcessingResult.Value(default)
+    }
+}
+
+interface OptionalSingleValueProcessor<R> : SingleValueProcessor<R?> {
+    override val result: ProcessingResult<R?> get() = explicitlySetValue.selfIfValueOrNull() ?: ProcessingResult.Value(null)
+}
+
 class BooleanProcessor : SingleValueProcessor<Boolean> {
     override var explicitlySetValue: ProcessingResult<Boolean> = ProcessingResult.NO_VALUE_ERROR
     override val result: ProcessingResult<Boolean> get() = explicitlySetValue.selfIfValueOrNull() ?: ProcessingResult.Value(false)
@@ -67,21 +82,40 @@ class BooleanProcessor : SingleValueProcessor<Boolean> {
         ProcessingResult.Error("The flag was passed twice")
 }
 
-class RequiredStringProcessor(defaultValue: String? = null) : SingleValueProcessor<String> {
+class RequiredStringProcessor(override val defaultValue: String? = null) : RequiredSingleValueProcessor<String> {
     override var explicitlySetValue: ProcessingResult<String> = ProcessingResult.NO_VALUE_ERROR
-    override val result: ProcessingResult<String> get() = explicitlySetValue.selfIfValueOrNull() ?: initialValue
-
-    private val initialValue = when {
-        defaultValue != null -> ProcessingResult.Value(defaultValue)
-        else -> explicitlySetValue
-    }
 
     override fun processNextValue(args: Iterator<String>) = expectNext(args)
 }
 
-class OptionalStringProcessor : SingleValueProcessor<String?> {
+class OptionalStringProcessor : OptionalSingleValueProcessor<String?> {
     override var explicitlySetValue: ProcessingResult<String?> = ProcessingResult.NO_VALUE_ERROR
-    override val result: ProcessingResult<String?> get() = explicitlySetValue.selfIfValueOrNull() ?: ProcessingResult.Value(null)
 
     override fun processNextValue(args: Iterator<String>) = expectNext(args)
+}
+
+interface EnumProcessor<E> : SingleValueProcessor<E> {
+    val namesToValues: Map<String, E>
+
+    private val supportedValues: String get() = namesToValues.keys.joinToString(", ") { "`$it`" }
+
+    override fun processNextValue(args: Iterator<String>): ProcessingResult<E> {
+        val string = expectNext(args).valueOrOnError { return it }
+
+        return namesToValues[string]?.let { ProcessingResult.Value(it) }
+            ?: ProcessingResult.Error("`$string` is not a supported value. The supported ones are: $supportedValues")
+    }
+}
+
+class RequiredEnumProcessor<E : Enum<E>>(
+    override val namesToValues: Map<String, E>,
+    override val defaultValue: E? = null,
+) : EnumProcessor<E>, RequiredSingleValueProcessor<E> {
+    override var explicitlySetValue: ProcessingResult<E> = ProcessingResult.NO_VALUE_ERROR
+}
+
+class OptionalEnumProcessor<E : Enum<E>>(
+    override val namesToValues: Map<String, E>,
+) : EnumProcessor<E?>, OptionalSingleValueProcessor<E> {
+    override var explicitlySetValue: ProcessingResult<E?> = ProcessingResult.NO_VALUE_ERROR
 }
