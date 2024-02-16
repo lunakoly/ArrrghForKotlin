@@ -17,3 +17,6 @@ inline fun <reified E: Enum<E>> ArrrghParserContextOwner.requiredEnum(parameterN
     parameterName denotes RequiredEnumProcessor(dashedNamesToValues<E>(), defaultValue)
 inline fun <reified E: Enum<E>> ArrrghParserContextOwner.optionalEnum(parameterName: String) =
     parameterName denotes OptionalEnumProcessor(dashedNamesToValues<E>())
+fun ArrrghParserContextOwner.requiredDouble(parameterName: String, defaultValue: Double? = null) =
+    parameterName denotes RequiredDoubleProcessor(defaultValue)
+fun ArrrghParserContextOwner.optionalDouble(parameterName: String) = parameterName denotes OptionalDoubleProcessor()

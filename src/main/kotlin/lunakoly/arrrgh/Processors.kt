@@ -119,3 +119,23 @@ class OptionalEnumProcessor<E : Enum<E>>(
 ) : EnumProcessor<E?>, OptionalSingleValueProcessor<E> {
     override var explicitlySetValue: ProcessingResult<E?> = ProcessingResult.NO_VALUE_ERROR
 }
+
+class RequiredDoubleProcessor(override val defaultValue: Double? = null) : RequiredSingleValueProcessor<Double> {
+    override var explicitlySetValue: ProcessingResult<Double> = ProcessingResult.NO_VALUE_ERROR
+
+    override fun processNextValue(args: Iterator<String>): ProcessingResult<Double> {
+        val string = expectNext(args).valueOrOnError { return it }
+
+        return string.toDoubleOrNull()?.let { ProcessingResult.Value(it) }
+            ?: ProcessingResult.Error("`$string` is not a valid double")
+    }
+}
+
+class OptionalDoubleProcessor : OptionalSingleValueProcessor<Double?> {
+    override var explicitlySetValue: ProcessingResult<Double?> = ProcessingResult.NO_VALUE_ERROR
+
+    override fun processNextValue(args: Iterator<String>): ProcessingResult<Double?> {
+        val string = expectNext(args).valueOrOnError { return it }
+        return ProcessingResult.Value(string.toDoubleOrNull())
+    }
+}
