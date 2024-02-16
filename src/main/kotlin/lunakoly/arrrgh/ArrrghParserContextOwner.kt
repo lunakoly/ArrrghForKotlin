@@ -10,13 +10,13 @@ interface ArrrghParserContextOwner {
 
 fun ArrrghParserContextOwner.list(parameterName: String) = parameterName denotes ListProcessor()
 fun ArrrghParserContextOwner.boolean(parameterName: String) = parameterName denotes BooleanProcessor()
-fun ArrrghParserContextOwner.requiredString(parameterName: String, defaultValue: String? = null) =
-    parameterName denotes RequiredStringProcessor(defaultValue)
 fun ArrrghParserContextOwner.optionalString(parameterName: String) = parameterName denotes OptionalStringProcessor()
-inline fun <reified E: Enum<E>> ArrrghParserContextOwner.requiredEnum(parameterName: String, defaultValue: E? = null) =
-    parameterName denotes RequiredEnumProcessor(dashedNamesToValues<E>(), defaultValue)
+fun ArrrghParserContextOwner.requiredString(parameterName: String, defaultValue: String? = null) =
+    parameterName denotes OptionalStringProcessor().toRequired(defaultValue)
 inline fun <reified E: Enum<E>> ArrrghParserContextOwner.optionalEnum(parameterName: String) =
     parameterName denotes OptionalEnumProcessor(dashedNamesToValues<E>())
-fun ArrrghParserContextOwner.requiredDouble(parameterName: String, defaultValue: Double? = null) =
-    parameterName denotes RequiredDoubleProcessor(defaultValue)
+inline fun <reified E: Enum<E>> ArrrghParserContextOwner.requiredEnum(parameterName: String, defaultValue: E? = null) =
+    parameterName denotes OptionalEnumProcessor(dashedNamesToValues<E>()).toRequired(defaultValue)
 fun ArrrghParserContextOwner.optionalDouble(parameterName: String) = parameterName denotes OptionalDoubleProcessor()
+fun ArrrghParserContextOwner.requiredDouble(parameterName: String, defaultValue: Double? = null) =
+    parameterName denotes OptionalDoubleProcessor().toRequired(defaultValue)

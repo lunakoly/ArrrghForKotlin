@@ -51,7 +51,7 @@ class ArrrghParserContextTest {
         val args = listOf(
             "--vata d --vata e --do-check --do-check",
             "--rode lolkek --bode default",
-            "--fraction test",
+            "--fraction test --fraction null",
         ).joinToString(" ").split(" ").toTypedArray()
         val parser = ArrrghParserContext()
 
@@ -75,6 +75,7 @@ class ArrrghParserContextTest {
                 "--do-check > The flag was passed twice",
                 "--rode > `lolkek` is not a supported value. The supported ones are: `long-option`, `default`",
                 "--fraction > `test` is not a valid double",
+                "--fraction > `null` is not a valid double",
                 "--data > Requires a value",
                 "--mode > Requires a value",
             ).joinToString("\n"),

@@ -57,7 +57,13 @@ interface SingleValueProcessor<T> : Processor<T> {
     fun processNextValue(args: Iterator<String>): ProcessingResult<T>
 }
 
+interface OptionalSingleValueProcessor<R> : SingleValueProcessor<R?> {
+    override val result: ProcessingResult<R?> get() = explicitlySetValue.selfIfValueOrNull() ?: ProcessingResult.Value(null)
+}
+
 interface RequiredSingleValueProcessor<R> : SingleValueProcessor<R> {
+    val delegateOptionalProcessor: SingleValueProcessor<R?>
+
     override val result: ProcessingResult<R> get() = explicitlySetValue.selfIfValueOrNull() ?: initialValue
 
     val defaultValue: R?
@@ -66,10 +72,23 @@ interface RequiredSingleValueProcessor<R> : SingleValueProcessor<R> {
         null -> explicitlySetValue
         else -> ProcessingResult.Value(default)
     }
+
+    override fun processNextValue(args: Iterator<String>): ProcessingResult<R> {
+        val optional = delegateOptionalProcessor.processNextValue(args).valueOrOnError { return it }
+
+        return when (optional) {
+            null -> ProcessingResult.Error("Expecting a non-null value")
+            else -> ProcessingResult.Value(optional)
+        }
+    }
 }
 
-interface OptionalSingleValueProcessor<R> : SingleValueProcessor<R?> {
-    override val result: ProcessingResult<R?> get() = explicitlySetValue.selfIfValueOrNull() ?: ProcessingResult.Value(null)
+fun <T> OptionalSingleValueProcessor<T?>.toRequired(defaultValue: T? = null): RequiredSingleValueProcessor<T> {
+    return object : RequiredSingleValueProcessor<T> {
+        override val defaultValue: T? = defaultValue
+        override var explicitlySetValue: ProcessingResult<T> = ProcessingResult.NO_VALUE_ERROR
+        override val delegateOptionalProcessor = this@toRequired
+    }
 }
 
 class BooleanProcessor : SingleValueProcessor<Boolean> {
@@ -82,20 +101,16 @@ class BooleanProcessor : SingleValueProcessor<Boolean> {
         ProcessingResult.Error("The flag was passed twice")
 }
 
-class RequiredStringProcessor(override val defaultValue: String? = null) : RequiredSingleValueProcessor<String> {
-    override var explicitlySetValue: ProcessingResult<String> = ProcessingResult.NO_VALUE_ERROR
-
-    override fun processNextValue(args: Iterator<String>) = expectNext(args)
-}
-
 class OptionalStringProcessor : OptionalSingleValueProcessor<String?> {
     override var explicitlySetValue: ProcessingResult<String?> = ProcessingResult.NO_VALUE_ERROR
 
     override fun processNextValue(args: Iterator<String>) = expectNext(args)
 }
 
-interface EnumProcessor<E> : SingleValueProcessor<E> {
-    val namesToValues: Map<String, E>
+class OptionalEnumProcessor<E : Enum<E>>(
+    private val namesToValues: Map<String, E>,
+) : OptionalSingleValueProcessor<E?> {
+    override var explicitlySetValue: ProcessingResult<E?> = ProcessingResult.NO_VALUE_ERROR
 
     private val supportedValues: String get() = namesToValues.keys.joinToString(", ") { "`$it`" }
 
@@ -107,35 +122,13 @@ interface EnumProcessor<E> : SingleValueProcessor<E> {
     }
 }
 
-class RequiredEnumProcessor<E : Enum<E>>(
-    override val namesToValues: Map<String, E>,
-    override val defaultValue: E? = null,
-) : EnumProcessor<E>, RequiredSingleValueProcessor<E> {
-    override var explicitlySetValue: ProcessingResult<E> = ProcessingResult.NO_VALUE_ERROR
-}
-
-class OptionalEnumProcessor<E : Enum<E>>(
-    override val namesToValues: Map<String, E>,
-) : EnumProcessor<E?>, OptionalSingleValueProcessor<E> {
-    override var explicitlySetValue: ProcessingResult<E?> = ProcessingResult.NO_VALUE_ERROR
-}
-
-class RequiredDoubleProcessor(override val defaultValue: Double? = null) : RequiredSingleValueProcessor<Double> {
-    override var explicitlySetValue: ProcessingResult<Double> = ProcessingResult.NO_VALUE_ERROR
-
-    override fun processNextValue(args: Iterator<String>): ProcessingResult<Double> {
-        val string = expectNext(args).valueOrOnError { return it }
-
-        return string.toDoubleOrNull()?.let { ProcessingResult.Value(it) }
-            ?: ProcessingResult.Error("`$string` is not a valid double")
-    }
-}
-
 class OptionalDoubleProcessor : OptionalSingleValueProcessor<Double?> {
     override var explicitlySetValue: ProcessingResult<Double?> = ProcessingResult.NO_VALUE_ERROR
 
     override fun processNextValue(args: Iterator<String>): ProcessingResult<Double?> {
         val string = expectNext(args).valueOrOnError { return it }
-        return ProcessingResult.Value(string.toDoubleOrNull())
+
+        return string.toDoubleOrNull()?.let { ProcessingResult.Value(it) }
+            ?: ProcessingResult.Error("`$string` is not a valid double")
     }
 }
