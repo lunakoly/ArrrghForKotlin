@@ -9,6 +9,23 @@ class ArrrghParserContextTest {
     }
 
     @Test
+    fun testUserExperience() {
+        val args = listOf(
+            "--mode long-option --bias 10.0"
+        ).joinToString(" ").split(" ").toTypedArray()
+
+        class MyOptions : Options() {
+            val mode by requiredEnum<TestEnum>("--mode")
+            val bias by requiredDouble("--bias", 5.0)
+        }
+
+        val options = MyOptions().fillFrom(args) ?: return
+
+        assertEquals(TestEnum.LONG_OPTION, options.mode)
+        assert(9.9 < options.bias && options.bias < 10.1)
+    }
+
+    @Test
     fun testGoodParse() {
         val args = listOf(
             "--params a --params b --data c --vata d --rata e --do-check f g",
