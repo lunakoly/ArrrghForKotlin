@@ -1,14 +1,16 @@
 package lunakoly.arrrgh
 
 import lunakoly.arrrgh.util.PeekingIterator
+import lunakoly.arrrgh.util.humanReadableList
 import lunakoly.arrrgh.util.withPeek
 
 internal class ArrrghParserContext : ArrrghParserContextOwner {
     private val errors = mutableListOf<String>()
     private val processors = mutableMapOf<String, Processor<*>>()
     private val defaultProcessor = ListProcessor()
+    private var isDefaultProcessorEnabled = false
 
-    override fun default() = defaultProcessor
+    override fun default() = defaultProcessor.also { isDefaultProcessorEnabled = true }
 
     override infix fun <R> String.denotes(processor: Processor<R>) = processor.also {
         if (processors[this] != null) {
@@ -40,6 +42,12 @@ internal class ArrrghParserContext : ArrrghParserContextOwner {
 
         for ((option, processor) in processors) {
             error = error combineWith processor.result.selfIfErrorOrNull().withPrefixes("$option > ")
+        }
+
+        val freeArguments = defaultProcessor.result.value
+
+        if (freeArguments.isNotEmpty() && !isDefaultProcessorEnabled) {
+            error = error combineWith ProcessingResult.Error("Free arguments are not expected to be present, but still are: ${freeArguments.humanReadableList}")
         }
 
         return error combineWith defaultProcessor.result.selfIfErrorOrNull()

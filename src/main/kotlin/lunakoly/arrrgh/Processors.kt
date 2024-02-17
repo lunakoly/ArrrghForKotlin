@@ -1,5 +1,6 @@
 package lunakoly.arrrgh
 
+import lunakoly.arrrgh.util.humanReadableList
 import kotlin.reflect.KProperty
 
 interface Processor<R> {
@@ -112,7 +113,7 @@ class OptionalEnumProcessor<E : Enum<E>>(
 ) : OptionalSingleValueProcessor<E?> {
     override var explicitlySetValue: ProcessingResult<E?> = ProcessingResult.NO_VALUE_ERROR
 
-    private val supportedValues: String get() = namesToValues.keys.joinToString(", ") { "`$it`" }
+    private val supportedValues: String get() = namesToValues.keys.humanReadableList
 
     override fun processNextValue(args: Iterator<String>): ProcessingResult<E> {
         val string = expectNext(args).valueOrOnError { return it }

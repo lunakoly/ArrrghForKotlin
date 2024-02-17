@@ -52,6 +52,7 @@ class ArrrghParserContextTest {
             "--vata d --vata e --do-check --do-check",
             "--rode lolkek --bode default",
             "--fraction test --fraction null",
+            "freeArg1 freeArg2"
         ).joinToString(" ").split(" ").toTypedArray()
         val parser = ArrrghParserContext()
 
@@ -65,7 +66,6 @@ class ArrrghParserContextTest {
         val optionalEnum by parser.optionalEnum<TestEnum>("--bode")
         val fraction by parser.requiredDouble("--fraction", 0.5)
         val accuracy by parser.optionalDouble("--accuracy")
-        val rest by parser.default()
 
         val error = parser.parse(args)
 
@@ -78,6 +78,7 @@ class ArrrghParserContextTest {
                 "--fraction > `null` is not a valid double",
                 "--data > Requires a value",
                 "--mode > Requires a value",
+                "Free arguments are not expected to be present, but still are: `freeArg1`, `freeArg2`",
             ).joinToString("\n"),
             error?.messages.orEmpty().joinToString("\n"),
         )

@@ -5,3 +5,5 @@ inline fun <reified E: Enum<E>> namesToValues() = enumValues<E>().associateBy { 
 inline fun <reified E: Enum<E>> dashedNamesToValues() = namesToValues<E>().mapKeys { it.key.dashed() }
 
 fun String.dashed() = lowercase().replace("_", "-")
+
+val Iterable<*>.humanReadableList get() = joinToString(", ") { "`$it`" }
